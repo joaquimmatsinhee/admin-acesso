@@ -1,31 +1,27 @@
-# Painel Admin — Node.js + Neon (Render)
+# Painel Admin — Node + Neon + Upload de arquivo
 
-Mesmo padrão da loja AllContent que já funciona no Render.
+Cadastre vídeos **pelo dispositivo** (celular/computador), não por URL.
+
+## Como funciona
+1. Você escolhe o arquivo de vídeo no formulário
+2. O servidor envia para o storage S3 (Neon)
+3. A URL gerada é salva na tabela `videos`
 
 ## Render
+- Build: `npm install`
+- Start: `npm start`
+- Env opcional:
+  - `DATABASE_URL`
+  - `AWS_ENDPOINT_URL_S3`
+  - `AWS_ACCESS_KEY_ID`
+  - `AWS_SECRET_ACCESS_KEY`
+  - `AWS_REGION`
+  - `S3_BUCKET`
 
-1. New → Web Service
-2. Build: `npm install`
-3. Start: `npm start`
-4. (Opcional) Env: `DATABASE_URL` = connection string Neon
-5. Deploy → abra a URL no PC/celular
-
-## Local
-
-```bash
-npm install
-npm start
-# http://localhost:3000
-```
+## Limite
+Upload até **500 MB** por arquivo (ajuste no Render se o proxy cortar antes).
 
 ## API
-
-- `GET    /api/videos`
-- `POST   /api/videos`
-- `PUT    /api/videos/:id`
-- `DELETE /api/videos/:id`
-- `GET    /api/settings/telegram`
-- `POST   /api/settings/telegram`
-- `GET    /api/health`
-
-Vídeos criados aqui aparecem na loja (mesmo banco Neon).
+- `POST /api/upload` (multipart: `file`, `kind=video|thumb`)
+- CRUD `/api/videos`
+- Telegram `/api/settings/telegram`

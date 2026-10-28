@@ -53,15 +53,25 @@
           <label class="label">Categoria</label>
           <input name="category" class="input" placeholder="Coleções" value="Coleções" />
         </div>
-        <div>
-          <label class="label">URL do Vídeo *</label>
-          <input name="video_url" required class="input" placeholder="https://... ou link do arquivo" />
+                <div>
+          <label class="label">Vídeo (do dispositivo) *</label>
+          <input type="file" id="video-file" accept="video/*,.mp4,.webm,.mov,.mkv" class="input file-input" />
+          <input type="hidden" name="video_url" id="video_url_hidden" value="" />
+          <p id="video-file-name" class="file-hint">Escolha um arquivo de vídeo do celular ou computador.</p>
+          <div id="video-upload-progress" class="upload-progress" hidden>
+            <div class="upload-bar"><span id="video-upload-bar"></span></div>
+            <p id="video-upload-text" class="file-hint">Enviando…</p>
+          </div>
         </div>
         <div>
-          <label class="label">URL da Thumbnail</label>
-          <input name="thumbnail_url" class="input" placeholder="https://... ou data:image..." />
-          <p class="text-xs text-gray-500 mt-1">Cole uma URL ou use upload de imagem abaixo (vira base64).</p>
-          <input type="file" id="thumb-file" accept="image/*" class="mt-2 text-xs" />
+          <label class="label">Capa / Thumbnail (opcional)</label>
+          <input type="file" id="thumb-file" accept="image/*" class="input file-input" />
+          <input type="hidden" name="thumbnail_url" id="thumbnail_url_hidden" value="" />
+          <p id="thumb-file-name" class="file-hint">Imagem de capa (JPG, PNG…). Opcional.</p>
+          <div id="thumb-upload-progress" class="upload-progress" hidden>
+            <div class="upload-bar"><span id="thumb-upload-bar"></span></div>
+            <p id="thumb-upload-text" class="file-hint">Enviando…</p>
+          </div>
         </div>
         <div class="flex items-center gap-2">
           <input type="checkbox" name="is_published" id="is_published" checked class="rounded border-gray-300" />

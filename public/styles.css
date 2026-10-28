@@ -365,3 +365,32 @@ html, body {
 @media (min-width: 640px) {
   .toast { left: auto; right: 20px; bottom: 20px; max-width: 380px; }
 }
+
+/* Upload UI */
+.file-input {
+  padding: 10px;
+  cursor: pointer;
+}
+.file-hint {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: #6b7280;
+  word-break: break-all;
+}
+.file-hint.ok { color: #059669; font-weight: 600; }
+.file-hint.err { color: #e11d48; }
+.upload-progress { margin-top: 8px; }
+.upload-bar {
+  height: 8px;
+  background: #e5e7eb;
+  border-radius: 999px;
+  overflow: hidden;
+}
+.upload-bar > span {
+  display: block;
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #4f46e5, #818cf8);
+  border-radius: 999px;
+  transition: width 0.2s ease;
+}

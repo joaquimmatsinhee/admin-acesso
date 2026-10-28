@@ -138,6 +138,34 @@ async function saveTelegramLink(url) {
   if (!res.ok || !data.success) throw new Error(data.error || 'Falha ao salvar Telegram');
 }
 
+
+/** Envia arquivo do dispositivo para /api/upload (S3 Neon) */
+function uploadFile(file, kind, onProgress) {
+  return new Promise((resolve, reject) => {
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('kind', kind || 'video');
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', '/api/upload');
+    xhr.upload.onprogress = (ev) => {
+      if (ev.lengthComputable && typeof onProgress === 'function') {
+        onProgress(Math.round((ev.loaded / ev.total) * 100));
+      }
+    };
+    xhr.onload = () => {
+      let data = null;
+      try { data = JSON.parse(xhr.responseText); } catch (e) {}
+      if (xhr.status >= 200 && xhr.status < 300 && data && data.success) {
+        resolve(data);
+      } else {
+        reject(new Error((data && data.error) || ('Upload falhou HTTP ' + xhr.status)));
+      }
+    };
+    xhr.onerror = () => reject(new Error('Falha de rede no upload'));
+    xhr.send(fd);
+  });
+}
+
 // ——— State ———
 let videos = [];
 let telegramLink = '';
@@ -490,23 +518,114 @@ function initModals() {
     reader.readAsDataURL(file);
   });
 
+  // Seleção de arquivo de vídeo (só mostra nome; upload no submit)
+  const videoFileInput = document.getElementById('video-file');
+  if (videoFileInput) {
+    videoFileInput.addEventListener('change', () => {
+      const f = videoFileInput.files && videoFileInput.files[0];
+      const label = document.getElementById('video-file-name');
+      if (!label) return;
+      if (!f) {
+        label.textContent = 'Escolha um arquivo de vídeo do celular ou computador.';
+        label.className = 'file-hint';
+        return;
+      }
+      const mb = (f.size / (1024 * 1024)).toFixed(1);
+      label.textContent = f.name + ' (' + mb + ' MB)';
+      label.className = 'file-hint ok';
+    });
+  }
+  const thumbFileInput = document.getElementById('thumb-file');
+  if (thumbFileInput) {
+    thumbFileInput.addEventListener('change', () => {
+      const f = thumbFileInput.files && thumbFileInput.files[0];
+      const label = document.getElementById('thumb-file-name');
+      if (!label) return;
+      if (!f) {
+        label.textContent = 'Imagem de capa (JPG, PNG…). Opcional.';
+        label.className = 'file-hint';
+        return;
+      }
+      const mb = (f.size / (1024 * 1024)).toFixed(1);
+      label.textContent = f.name + ' (' + mb + ' MB)';
+      label.className = 'file-hint ok';
+    });
+  }
+
   document.getElementById('video-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const form = e.target;
-    const data = {
-      title: form.title.value,
-      description: form.description.value,
-      price: Number(form.price.value),
-      duration: form.duration.value,
-      category: form.category.value,
-      video_url: form.video_url.value,
-      thumbnail_url: form.thumbnail_url.value,
-      is_published: form.is_published.checked,
-    };
     const btn = document.getElementById('video-submit-btn');
+    const videoInput = document.getElementById('video-file');
+    const thumbInput = document.getElementById('thumb-file');
+    const videoHidden = document.getElementById('video_url_hidden');
+    const thumbHidden = document.getElementById('thumbnail_url_hidden');
+
+    let videoUrl = (videoHidden && videoHidden.value) || '';
+    let thumbUrl = (thumbHidden && thumbHidden.value) || '';
+
+    const videoFile = videoInput && videoInput.files && videoInput.files[0];
+    const thumbFile = thumbInput && thumbInput.files && thumbInput.files[0];
+
+    // Novo cadastro exige arquivo de vídeo
+    if (!editingVideo && !videoFile && !videoUrl) {
+      showToast('Selecione o vídeo no seu dispositivo.', 'error');
+      return;
+    }
+    // Edição: arquivo opcional (mantém URL atual se não trocar)
+    if (editingVideo && !videoFile && !videoUrl) {
+      showToast('Este vídeo não tem arquivo. Selecione um vídeo.', 'error');
+      return;
+    }
+
     btn.disabled = true;
-    btn.textContent = 'Salvando...';
+    btn.textContent = 'Enviando...';
+
     try {
+      if (videoFile) {
+        const prog = document.getElementById('video-upload-progress');
+        const bar = document.getElementById('video-upload-bar');
+        const txt = document.getElementById('video-upload-text');
+        if (prog) prog.hidden = false;
+        if (txt) txt.textContent = 'Enviando vídeo… 0%';
+        const up = await uploadFile(videoFile, 'video', (p) => {
+          if (bar) bar.style.width = p + '%';
+          if (txt) txt.textContent = 'Enviando vídeo… ' + p + '%';
+        });
+        videoUrl = up.url;
+        if (videoHidden) videoHidden.value = videoUrl;
+        if (txt) txt.textContent = 'Vídeo enviado!';
+        if (bar) bar.style.width = '100%';
+      }
+
+      if (thumbFile) {
+        const prog = document.getElementById('thumb-upload-progress');
+        const bar = document.getElementById('thumb-upload-bar');
+        const txt = document.getElementById('thumb-upload-text');
+        if (prog) prog.hidden = false;
+        if (txt) txt.textContent = 'Enviando capa… 0%';
+        const up = await uploadFile(thumbFile, 'thumb', (p) => {
+          if (bar) bar.style.width = p + '%';
+          if (txt) txt.textContent = 'Enviando capa… ' + p + '%';
+        });
+        thumbUrl = up.url;
+        if (thumbHidden) thumbHidden.value = thumbUrl;
+        if (txt) txt.textContent = 'Capa enviada!';
+        if (bar) bar.style.width = '100%';
+      }
+
+      btn.textContent = 'Salvando...';
+      const data = {
+        title: form.title.value,
+        description: form.description.value,
+        price: Number(form.price.value),
+        duration: form.duration.value,
+        category: form.category.value,
+        video_url: videoUrl,
+        thumbnail_url: thumbUrl,
+        is_published: form.is_published.checked,
+      };
+
       if (editingVideo) {
         const updated = await updateVideo(editingVideo.id, data);
         videos = videos.map((v) => (v.id === updated.id ? updated : v));
@@ -520,7 +639,7 @@ function initModals() {
       render();
     } catch (err) {
       console.error(err);
-      showToast('Erro ao salvar: ' + (err.message || err), 'error');
+      showToast('Erro: ' + (err.message || err), 'error');
     } finally {
       btn.disabled = false;
       btn.textContent = 'Salvar';
