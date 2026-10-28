@@ -245,43 +245,51 @@ function render() {
         '<tr data-id="' +
         escapeHtml(v.id) +
         '">' +
-        '<td>' +
-        thumb +
-        '</td>' +
-        '<td><div class="font-semibold text-gray-900">' +
-        escapeHtml(v.title) +
-        '</div><div class="text-xs text-gray-500 line-clamp-1">' +
-        escapeHtml(v.description || '') +
+        '<td>' + thumb + '</td>' +
+        '<td><div class="font-semibold text-gray-900">' + escapeHtml(v.title) +
+        '</div><div class="text-xs text-gray-500 line-clamp-1">' + escapeHtml(v.description || '') +
         '</div></td>' +
-        '<td class="font-bold text-indigo-700">$' +
-        Number(v.price).toFixed(2) +
-        '</td>' +
-        '<td>' +
-        status +
-        '</td>' +
-        '<td class="text-xs text-gray-500">' +
-        escapeHtml(v.duration || '') +
-        '</td>' +
-        '<td class="text-xs text-gray-500">' +
-        date +
-        '</td>' +
+        '<td class="font-bold text-indigo-700">$' + Number(v.price).toFixed(2) + '</td>' +
+        '<td>' + status + '</td>' +
+        '<td class="text-xs text-gray-500">' + escapeHtml(v.duration || '') + '</td>' +
+        '<td class="text-xs text-gray-500">' + date + '</td>' +
         '<td><div class="flex flex-wrap gap-1">' +
-        '<button type="button" class="btn-ghost" data-action="preview" data-id="' +
-        escapeHtml(v.id) +
-        '" title="Preview">▶</button>' +
-        '<button type="button" class="btn-ghost" data-action="copy" data-id="' +
-        escapeHtml(v.id) +
-        '" title="Copiar link pagamento">📋</button>' +
-        '<a class="btn-ghost" href="' +
-        escapeHtml(v.payment_url) +
-        '" target="_blank" rel="noopener" title="Abrir pagamento">↗</a>' +
-        '<button type="button" class="btn-ghost" data-action="edit" data-id="' +
-        escapeHtml(v.id) +
-        '" title="Editar">✎</button>' +
-        '<button type="button" class="btn-ghost text-rose-600" data-action="delete" data-id="' +
-        escapeHtml(v.id) +
-        '" title="Apagar">🗑</button>' +
+        '<button type="button" class="btn-ghost" data-action="preview" data-id="' + escapeHtml(v.id) + '" title="Preview">▶</button>' +
+        '<button type="button" class="btn-ghost" data-action="copy" data-id="' + escapeHtml(v.id) + '" title="Copiar">📋</button>' +
+        '<a class="btn-ghost" href="' + escapeHtml(v.payment_url) + '" target="_blank" rel="noopener" title="Pagamento">↗</a>' +
+        '<button type="button" class="btn-ghost" data-action="edit" data-id="' + escapeHtml(v.id) + '" title="Editar">✎</button>' +
+        '<button type="button" class="btn-ghost text-rose-600" data-action="delete" data-id="' + escapeHtml(v.id) + '" title="Apagar">🗑</button>' +
         '</div></td></tr>'
+      );
+    })
+    .join('');
+
+  const cardsHtml = filtered
+    .map((v) => {
+      const thumb = v.thumbnail_url
+        ? '<img class="thumb" src="' + escapeHtml(v.thumbnail_url) + '" alt="" />'
+        : '<div class="thumb"></div>';
+      const status = v.is_published
+        ? '<span class="badge badge-green">Publicado</span>'
+        : '<span class="badge badge-gray">Rascunho</span>';
+      const date = v.created_at
+        ? new Date(v.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
+        : '—';
+      return (
+        '<article class="video-card" data-id="' + escapeHtml(v.id) + '">' +
+        '<div class="video-card-top">' + thumb +
+        '<div class="video-card-meta"><h3>' + escapeHtml(v.title) + '</h3>' +
+        '<p class="video-card-desc">' + escapeHtml(v.description || '') + '</p></div></div>' +
+        '<div class="video-card-row">' + status +
+        '<strong class="text-indigo-700">$' + Number(v.price).toFixed(2) + '</strong>' +
+        '<span>' + escapeHtml(v.duration || '') + '</span>' +
+        '<span>' + date + '</span></div>' +
+        '<div class="video-card-actions">' +
+        '<button type="button" data-action="preview" data-id="' + escapeHtml(v.id) + '">▶ Ver</button>' +
+        '<button type="button" data-action="copy" data-id="' + escapeHtml(v.id) + '">📋 Link</button>' +
+        '<button type="button" data-action="edit" data-id="' + escapeHtml(v.id) + '">✎ Editar</button>' +
+        '<button type="button" class="act-danger" data-action="delete" data-id="' + escapeHtml(v.id) + '">🗑</button>' +
+        '</div></article>'
       );
     })
     .join('');
@@ -289,12 +297,12 @@ function render() {
   app.innerHTML =
     '<header class="bg-white border-b border-gray-200 sticky top-0 z-30 shadow-sm">' +
     '<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">' +
-    '<div class="flex items-center justify-between h-16 sm:h-20 gap-4">' +
+    '<div class="admin-header-inner flex items-center justify-between h-16 sm:h-20 gap-4">' +
     '<div class="flex items-center gap-3">' +
     '<div class="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-md text-lg">▶</div>' +
     '<div><h1 class="text-lg sm:text-xl font-bold tracking-tight">Painel Admin de Vídeos</h1>' +
     '<p class="text-xs text-gray-500">Cadastro, gerenciamento e monetização · Node/Render</p></div></div>' +
-    '<div class="flex items-center gap-2 sm:gap-3">' +
+    '<div class="admin-header-actions flex items-center gap-2 sm:gap-3">' +
     '<button type="button" id="btn-telegram" class="flex items-center gap-2 px-3 py-2 rounded-xl border border-sky-200 bg-sky-50 hover:bg-sky-100 text-sky-800 text-xs font-bold">' +
     '➤ Telegram <span class="w-2 h-2 rounded-full ' +
     (telegramLink ? 'bg-emerald-500' : 'bg-gray-400') +
@@ -342,12 +350,17 @@ function render() {
         '</strong> de <strong>' +
         videos.length +
         '</strong> vídeos</div></div>' +
-        '<div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden table-wrap">' +
+        '<div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden table-wrap desktop-only">' +
         (filtered.length === 0
-          ? '<div class="p-12 text-center text-gray-500 text-sm">Nenhum vídeo encontrado. Clique em <strong>Cadastrar Vídeo</strong>.</div>'
-          : '<table class="admin-table"><thead><tr><th></th><th>Vídeo</th><th>Preço</th><th>Status</th><th>Duração</th><th>Data</th><th>Ações</th></tr></thead><tbody>' +
+          ? '<div class="p-12 text-center text-gray-500 text-sm">Nenhum vídeo encontrado.</div>'
+          : '<table class="admin-table desktop-only"><thead><tr><th></th><th>Vídeo</th><th>Preço</th><th>Status</th><th>Duração</th><th>Data</th><th>Ações</th></tr></thead><tbody>' +
             rowsHtml +
             '</tbody></table>') +
+        '</div>' +
+        '<div class="video-cards mobile-only">' +
+        (filtered.length === 0
+          ? '<div class="p-8 text-center text-gray-500 text-sm">Nenhum vídeo encontrado. Toque em <strong>Cadastrar</strong>.</div>'
+          : cardsHtml) +
         '</div></div>') +
     '</main>';
 
